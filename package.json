@@ -1,0 +1,20 @@
+{
+  "name": "pod-listing-copy-tool",
+  "version": "1.0.0",
+  "description": "POD custom gift Shopify listing copy tool (Etsy → SEO titles + five-bullet description via OpenAI GPT)",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1"
+  }
+}

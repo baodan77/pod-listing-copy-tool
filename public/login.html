@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>登录 · POD 定制礼品文案工具</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="card login-box">
+      <h1>POD 定制礼品文案工具</h1>
+      <p class="muted">员工登录后可生成 Shopify 标题与五点描述。OpenAI API Key 在服务器环境变量中配置，无需在此填写。</p>
+      <form id="loginForm">
+        <label for="username">用户名</label>
+        <input id="username" name="username" type="text" autocomplete="username" required />
+        <label for="password">密码</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+        <div class="row" style="margin-top:16px">
+          <button class="primary" type="submit">登录</button>
+        </div>
+        <div id="err" class="callout err hidden" style="margin-top:12px"></div>
+      </form>
+    </div>
+  </div>
+  <script>
+    const form = document.getElementById('loginForm');
+    const err = document.getElementById('err');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      err.classList.add('hidden');
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          err.textContent = data.error || '登录失败';
+          err.classList.remove('hidden');
+          return;
+        }
+        location.href = '/';
+      } catch (ex) {
+        err.textContent = '网络错误，请重试';
+        err.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>

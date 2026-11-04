@@ -1,0 +1,32 @@
+# Blueprint for Doris POD listing copy tool.
+# Push this repo to GitHub/GitLab/Bitbucket, then open:
+#   https://dashboard.render.com/blueprint/new?repo=<YOUR_HTTPS_REPO_URL>
+# Fill sync:false secrets in the Dashboard, then Apply.
+services:
+  - type: web
+    name: pod-listing-copy-tool
+    runtime: node
+    region: singapore
+    plan: 0.5c-512mb
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AUTH_USERNAME
+        sync: false
+      - key: AUTH_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+    disk:
+      name: pod-listing-data
+      mountPath: /var/data
+      sizeGB: 1
