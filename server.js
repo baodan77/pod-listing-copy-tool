@@ -9,6 +9,7 @@ const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const { SaveStore } = require('./lib/store');
 const { generateCopy } = require('./lib/openai');
+const { resolveOpenAiApiKey } = require('./lib/openaiKey');
 
 const PORT = Number(process.env.PORT) || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -19,15 +20,6 @@ const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toSt
 const OPENAI_API_KEY = resolveOpenAiApiKey();
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || '';
-
-function resolveOpenAiApiKey() {
-  const raw = (process.env.OPENAI_API_KEY || '').trim();
-  const hex = (process.env.OPENAI_API_KEY_HEX || '').trim();
-  if (hex && /^[0-9a-fA-F]+$/.test(hex) && hex.length % 2 === 0) {
-    return Buffer.from(hex, 'hex').toString('utf8');
-  }
-  return raw;
-}
 
 if (!process.env.SESSION_SECRET && NODE_ENV === 'production') {
   console.warn('[warn] SESSION_SECRET not set; using ephemeral secret (sessions reset on restart)');
