@@ -22,6 +22,7 @@ npm start
 | 变量 | 必填 | 说明 |
 |------|------|------|
 | `OPENAI_API_KEY` | 是 | OpenAI API Key（[platform.openai.com/api-keys](https://platform.openai.com/api-keys)） |
+| `OPENAI_API_KEY_HEX` | 否 | `OPENAI_API_KEY` 的十六进制编码。Dashboard / MCP 截断 `sk-` 密钥时，用这项注入完整 key |
 | `AUTH_USERNAME` | 是 | 登录用户名 |
 | `AUTH_PASSWORD` | 是 | 登录密码 |
 | `SESSION_SECRET` | 生产必填 | Cookie session 签名密钥；生产环境务必设为长随机串 |
@@ -30,6 +31,8 @@ npm start
 | `OPENAI_MODEL` | 否 | 默认 `gpt-4o-mini` |
 | `OPENAI_BASE_URL` | 否 | 默认 `https://api.openai.com/v1`；可指向兼容代理 |
 | `NODE_ENV` | 否 | 设为 `production` 时启用 `Secure` Cookie |
+
+`AUTH_USERNAME` 和 `AUTH_PASSWORD` 会去掉首尾空白。若 `OPENAI_API_KEY_HEX` 非空、且为偶数长度的十六进制字符串，服务把它解码后当作 `OPENAI_API_KEY`；否则使用明文 `OPENAI_API_KEY`（同样去掉首尾空白）。密钥值不会写入日志。
 
 ## API 摘要
 
