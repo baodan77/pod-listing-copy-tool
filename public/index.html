@@ -11,7 +11,7 @@
     <div class="topbar">
       <div>
         <h1>Etsy → Shopify POD 定制礼品文案工具</h1>
-        <p class="muted" style="margin:0">填 5 组 Etsy → GPT 生成无连字符 SEO 标题 + 五点描述；可一键保存并单条删除。</p>
+        <p class="muted" style="margin:0">填 5 组 Etsy → 可先保存输入草稿，下次登录一键回填；再生成无连字符 SEO 标题 + 五点描述，结果也可保存并删除。</p>
       </div>
       <div class="row">
         <span id="userBadge" class="badge"></span>
@@ -24,8 +24,9 @@
       <h2>怎么用</h2>
       <ol class="muted">
         <li>每组填：链接 + 标题 + 卖点（可定制项、收礼人、场合、材质）。</li>
+        <li>点「保存当前输入」：把表单草稿存到服务器；下次登录可在「输入草稿库」一键回填或删除。</li>
         <li>点「生成」：输出 5 个无 - 等符号的英文标题，以及 1 段五点英文描述。</li>
-        <li>复制英文，或「一键保存」后在「已保存」回看；每条可单独删除。</li>
+        <li>复制英文，或「一键保存本条结果」后在「已保存结果」回看；每条可单独删除。</li>
       </ol>
       <div class="callout">POD 标题：窄词靠前；标明 Personalized / Custom；Gift 与场合清晰；标题不用连字符、斜杠等符号。OpenAI API Key 填在 Render / 本地环境变量 <code>OPENAI_API_KEY</code>，不在网页上填。</div>
     </div>
@@ -35,11 +36,19 @@
       <div id="slots"></div>
       <div class="row" style="margin-top:8px">
         <button type="button" class="primary" id="generateBtn">生成</button>
+        <button type="button" id="saveDraftBtn">保存当前输入</button>
         <button type="button" id="demoBtn">载入演示</button>
         <button type="button" id="clearBtn">清空</button>
       </div>
+      <div id="draftNote" class="callout ok hidden"></div>
       <div id="genErr" class="callout err hidden"></div>
       <div id="genStatus" class="callout hidden"></div>
+    </div>
+
+    <div class="card">
+      <h2>输入草稿库 <span id="draftCount" class="badge">0</span></h2>
+      <p class="muted" id="draftHint">保存当前输入后，草稿会出现在这里；可一键回填到上方表单，或删除。</p>
+      <div id="draftList"></div>
     </div>
 
     <div id="resultCard" class="card hidden">
@@ -56,8 +65,8 @@
     </div>
 
     <div class="card">
-      <h2>已保存 <span id="savedCount" class="badge">0</span></h2>
-      <p class="muted" id="savedHint">生成后点「一键保存本条结果」，记录会出现在这里。</p>
+      <h2>已保存结果 <span id="savedCount" class="badge">0</span></h2>
+      <p class="muted" id="savedHint">生成后点「一键保存本条结果」，文案会出现在这里（与输入草稿分开）。</p>
       <div id="savedList"></div>
     </div>
 
@@ -74,7 +83,8 @@
 
   <div class="fab">
     <button type="button" class="primary" id="fabGenerate">生成</button>
-    <button type="button" id="fabSave">保存</button>
+    <button type="button" id="fabSaveDraft">保存输入</button>
+    <button type="button" id="fabSave">保存结果</button>
   </div>
 
   <script src="/app.js"></script>

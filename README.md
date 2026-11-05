@@ -1,6 +1,6 @@
 # POD 定制礼品文案工具
 
-员工用网页工具：粘贴最多 5 组 Etsy 标题/卖点 → 调用 **OpenAI GPT** 生成 Shopify SEO 标题（5 条，无连字符）+ 五点英文描述（附中文对照）→ 可一键保存、回看、单条删除。
+员工用网页工具：粘贴最多 5 组 Etsy 标题/卖点 → 调用 **OpenAI 兼容接口**（官方 GPT 或 NewAPI 等代理上的 Gemini/其他模型）生成 Shopify SEO 标题（5 条，无连字符）+ 五点英文描述（附中文对照）→ 可一键保存、回看、单条删除。
 
 面向多店运营，**不绑定**某一个 Shopify 店铺。OpenAI API Key、登录账号都在**服务器环境变量**里配置，不会出现在前端。
 
@@ -29,8 +29,8 @@ npm start
 | `SESSION_SECRET` | 生产必填 | Cookie session 签名密钥；生产环境务必设为长随机串 |
 | `PORT` | 否 | 默认 `3000`（Render 会注入自己的 `PORT`） |
 | `DATA_DIR` | 否 | 保存文件目录，默认 `./data`；Render Blueprint 设为 `/var/data` |
-| `OPENAI_MODEL` | 否 | 默认 `gpt-4o-mini` |
-| `OPENAI_BASE_URL` | 否 | 默认 `https://api.openai.com/v1`；可指向兼容代理 |
+| `OPENAI_MODEL` | 否 | 默认 `gpt-4o-mini`；代理示例 `gemini-4-argon-medium` |
+| `OPENAI_BASE_URL` | 否 | 默认 `https://api.openai.com/v1`；NewAPI/OneAPI 等兼容代理填 `https://host/v1` |
 | `NODE_ENV` | 否 | 设为 `production` 时启用 `Secure` Cookie |
 
 `AUTH_USERNAME` 和 `AUTH_PASSWORD` 会去掉首尾空白。OpenAI key 三选一：明文 `OPENAI_API_KEY`，或 `OPENAI_API_KEY_HEX`，或编号分段 `OPENAI_API_KEY_HEX_01`、`OPENAI_API_KEY_HEX_02`、…。从 `_01` 起能拼出分段时用分段（优先于整段 `OPENAI_API_KEY_HEX`）；否则用整段十六进制。只要走了十六进制，就不用明文（明文可能是被截断的残段）。编号段去掉首尾空白后按数字顺序拼接；第一个缺失编号之后的段忽略。解码失败（非法十六进制，或 `Buffer.from(..., 'hex')` 抛错）时视为未配置，得到空字符串，不回退到明文。只设置 `OPENAI_API_KEY` 时行为与原来相同。密钥值不会写入日志。
@@ -42,7 +42,8 @@ npm start
 - `POST /api/logout`
 - `GET /api/me`
 - `POST /api/generate` — `{ listings: [{ url, title, points }, ...] }`
-- `GET /api/saves` / `POST /api/saves` / `DELETE /api/saves/:id`
+- `GET /api/drafts` / `POST /api/drafts` / `DELETE /api/drafts/:id` — 保存/回填/删除**输入表单**草稿（`listings`）
+- `GET /api/saves` / `POST /api/saves` / `DELETE /api/saves/:id` — 保存生成后的文案结果
 
 ## 部署到 Render
 
@@ -56,7 +57,7 @@ npm start
    - `AUTH_USERNAME`
    - `AUTH_PASSWORD`
    - `SESSION_SECRET`
-4. `OPENAI_MODEL` 默认 `gpt-4o-mini`；`DATA_DIR=/var/data`。
+4. `OPENAI_MODEL` / `OPENAI_BASE_URL`：官方默认 `gpt-4o-mini`；本仓库 Blueprint 示例为代理 `gemini-4-argon-medium` + `https://api.xgapiproxy.win/v1`。`DATA_DIR=/var/data`。
 5. Apply → 等部署完成 → 打开 `https://<service>.onrender.com`，用你设的账号登录。
 
 **说明：** Free Web Service **不支持**持久磁盘，保存会在重启/休眠后丢失。本 Blueprint 使用带磁盘的 `0.5c-512mb`（原 starter 档）。若你坚持 Free，可删掉 `disk:` 段并把 `plan` 改为 `free`，接受内存/临时盘保存。

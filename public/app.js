@@ -34,6 +34,7 @@ const DEMO = [
 ];
 
 const LS_MIRROR = 'pod-listing-copy-saves-mirror-v1';
+const LS_DRAFT_MIRROR = 'pod-listing-copy-drafts-mirror-v1';
 
 function emptySlots() {
   return Array.from({ length: 5 }, () => ({ url: '', title: '', points: '' }));
@@ -42,6 +43,7 @@ function emptySlots() {
 let slots = emptySlots();
 let pack = null;
 let saves = [];
+let drafts = [];
 
 const $ = (id) => document.getElementById(id);
 
@@ -173,6 +175,129 @@ function mirrorLocal() {
   }
 }
 
+
+function mirrorDraftsLocal() {
+  try {
+    localStorage.setItem(LS_DRAFT_MIRROR, JSON.stringify(drafts));
+  } catch {
+    /* ignore */
+  }
+}
+
+function applyListingsToForm(listings) {
+  const next = emptySlots();
+  (listings || []).slice(0, 5).forEach((s, i) => {
+    next[i] = {
+      url: String(s.url || ''),
+      title: String(s.title || ''),
+      points: String(s.points || ''),
+    };
+  });
+  slots = next;
+  pack = null;
+  renderSlots();
+  renderResult();
+  $('genErr').classList.add('hidden');
+  $('saveNote').classList.add('hidden');
+  $('draftNote').classList.add('hidden');
+  $('genStatus').classList.add('hidden');
+}
+
+function renderDrafts() {
+  $('draftCount').textContent = String(drafts.length);
+  const list = $('draftList');
+  if (!drafts.length) {
+    $('draftHint').classList.remove('hidden');
+    list.innerHTML = '';
+    return;
+  }
+  $('draftHint').classList.add('hidden');
+  list.innerHTML = drafts
+    .map((item) => {
+      const preview = (item.listings || [])
+        .filter((s) => (s.title || '').trim() || (s.url || '').trim())
+        .slice(0, 3)
+        .map((s) => esc((s.title || s.url || '').trim()))
+        .join(' · ');
+      return `
+      <details class="slot saved-item">
+        <summary>${esc(item.label)} <span class="badge">${esc(formatSavedAt(item.savedAt))}</span> <span class="badge">${esc(String(item.filled || 0))}/5</span></summary>
+        <p class="muted" style="margin:8px 0">${preview || '（无标题预览）'}</p>
+        <div class="row" style="margin:10px 0">
+          <button type="button" class="primary" data-load-draft="${esc(item.id)}">一键回填到表单</button>
+          <button type="button" class="danger" data-del-draft="${esc(item.id)}">删除这条草稿</button>
+        </div>
+      </details>`;
+    })
+    .join('');
+  list.querySelectorAll('[data-load-draft]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-load-draft');
+      const item = drafts.find((x) => x.id === id);
+      if (!item) return;
+      applyListingsToForm(item.listings);
+      const note = $('draftNote');
+      note.className = 'callout ok';
+      note.textContent = `已回填草稿「${item.label}」，可继续编辑或点生成。`;
+      note.classList.remove('hidden');
+      window.scrollTo({ top: $('slots').offsetTop - 40, behavior: 'smooth' });
+    });
+  });
+  list.querySelectorAll('[data-del-draft]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-del-draft');
+      if (!confirm('确定删除这条输入草稿？')) return;
+      try {
+        await api(`/api/drafts/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        drafts = drafts.filter((x) => x.id !== id);
+        mirrorDraftsLocal();
+        renderDrafts();
+      } catch (e) {
+        alert(e.message || '删除失败');
+      }
+    });
+  });
+}
+
+async function loadDrafts() {
+  const data = await api('/api/drafts');
+  drafts = data.items || [];
+  mirrorDraftsLocal();
+  renderDrafts();
+}
+
+async function doSaveDraft() {
+  const note = $('draftNote');
+  const filled = slots.filter((s) => s.url.trim() || s.title.trim() || s.points.trim());
+  if (!filled.length) {
+    note.className = 'callout warn';
+    note.textContent = '请至少填写 1 组链接、标题或卖点后再保存草稿。';
+    note.classList.remove('hidden');
+    return;
+  }
+  const firstTitle = slots.map((s) => s.title.trim()).find(Boolean) || '';
+  const label = firstTitle || `输入草稿 ${new Date().toLocaleString('zh-CN', { hour12: false })}`;
+  try {
+    const data = await api('/api/drafts', {
+      method: 'POST',
+      body: JSON.stringify({ label, listings: slots }),
+    });
+    drafts = [data.item, ...drafts.filter((x) => x.id !== data.item.id)];
+    mirrorDraftsLocal();
+    renderDrafts();
+    note.className = 'callout ok';
+    note.textContent = data.persistent
+      ? '输入草稿已保存到服务器，下次登录可在「输入草稿库」一键回填。'
+      : '输入草稿已保存（当前为内存模式，进程重启后可能丢失）。';
+    note.classList.remove('hidden');
+  } catch (e) {
+    note.className = 'callout err';
+    note.textContent = e.message || '保存草稿失败';
+    note.classList.remove('hidden');
+  }
+}
+
+
 function renderSaves() {
   $('savedCount').textContent = String(saves.length);
   const list = $('savedList');
@@ -246,7 +371,7 @@ async function doGenerate() {
   err.classList.add('hidden');
   status.classList.remove('hidden');
   status.className = 'callout';
-  status.textContent = '正在调用 GPT 生成…';
+  status.textContent = '正在调用模型生成…';
   $('generateBtn').disabled = true;
   $('fabGenerate').disabled = true;
   try {
@@ -314,6 +439,7 @@ function loadDemo() {
   renderResult();
   $('genErr').classList.add('hidden');
   $('saveNote').classList.add('hidden');
+  $('draftNote').classList.add('hidden');
 }
 
 function clearAll() {
@@ -323,11 +449,14 @@ function clearAll() {
   renderResult();
   $('genErr').classList.add('hidden');
   $('saveNote').classList.add('hidden');
+  $('draftNote').classList.add('hidden');
   $('genStatus').classList.add('hidden');
 }
 
 $('generateBtn').addEventListener('click', doGenerate);
 $('fabGenerate').addEventListener('click', doGenerate);
+$('saveDraftBtn').addEventListener('click', doSaveDraft);
+$('fabSaveDraft').addEventListener('click', doSaveDraft);
 $('saveBtn').addEventListener('click', doSave);
 $('fabSave').addEventListener('click', doSave);
 $('demoBtn').addEventListener('click', loadDemo);
@@ -345,6 +474,7 @@ $('logoutBtn').addEventListener('click', async () => {
   try {
     await loadMe();
     renderSlots();
+    await loadDrafts();
     await loadSaves();
   } catch (e) {
     console.error(e);

@@ -17,9 +17,12 @@ services:
       - key: DATA_DIR
         value: /var/data
       - key: OPENAI_MODEL
-        value: gpt-4o-mini
+        value: gemini-4-argon-medium
+      - key: OPENAI_BASE_URL
+        value: https://api.xgapiproxy.win/v1
       - key: OPENAI_API_KEY
         sync: false
+      # Prefer OPENAI_API_KEY_HEX_01… when dashboards truncate sk- keys
       - key: AUTH_USERNAME
         sync: false
       - key: AUTH_PASSWORD

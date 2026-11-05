@@ -8,6 +8,7 @@ const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const { SaveStore } = require('./lib/store');
+const { DraftStore } = require('./lib/draftStore');
 const { generateCopy } = require('./lib/openai');
 const { resolveOpenAiApiKey } = require('./lib/openaiKey');
 
@@ -32,6 +33,7 @@ if (!OPENAI_API_KEY) {
 }
 
 const store = new SaveStore(DATA_DIR);
+const draftStore = new DraftStore(DATA_DIR);
 const app = express();
 
 app.set('trust proxy', 1);
@@ -109,7 +111,7 @@ app.get('/api/me', (req, res) => {
   res.json({
     ok: true,
     username: req.session.username || AUTH_USERNAME,
-    persistent: store.persistent,
+    persistent: store.persistent && draftStore.persistent,
   });
 });
 
@@ -133,6 +135,38 @@ app.post('/api/generate', requireAuth, async (req, res) => {
       code: err.code || 'ERROR',
     });
   }
+});
+
+app.get('/api/drafts', requireAuth, (_req, res) => {
+  res.json({
+    ok: true,
+    persistent: draftStore.persistent,
+    items: draftStore.list(),
+  });
+});
+
+app.post('/api/drafts', requireAuth, (req, res) => {
+  try {
+    const body = req.body || {};
+    const record = draftStore.add({
+      label: body.label,
+      listings: body.listings,
+    });
+    res.json({ ok: true, item: record, persistent: draftStore.persistent });
+  } catch (err) {
+    const status = err.code === 'BAD_INPUT' ? 400 : 500;
+    res.status(status).json({
+      ok: false,
+      error: err.message || '保存草稿失败',
+      code: err.code || 'ERROR',
+    });
+  }
+});
+
+app.delete('/api/drafts/:id', requireAuth, (req, res) => {
+  const removed = draftStore.delete(String(req.params.id));
+  if (!removed) return res.status(404).json({ ok: false, error: '未找到' });
+  res.json({ ok: true, persistent: draftStore.persistent });
 });
 
 app.get('/api/saves', requireAuth, (_req, res) => {
@@ -179,5 +213,5 @@ app.use((err, _req, res, _next) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`POD listing copy tool listening on 0.0.0.0:${PORT} (${NODE_ENV})`);
-  console.log(`DATA_DIR=${DATA_DIR} persistent=${store.persistent}`);
+  console.log(`DATA_DIR=${DATA_DIR} saves=${store.persistent} drafts=${draftStore.persistent}`);
 });
