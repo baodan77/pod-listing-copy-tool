@@ -71,6 +71,9 @@ npm start
 
 ## 产品规则（写入 GPT 系统提示）
 
-- 标题：窄受众（如 Goldendoodle mom gift）；Personalized/Custom + Gift + 场合；约 70 字符；**禁止** `- – — / | _` 等符号
-- 五点：可定制项 → 收礼人情感 → 材质 → 场合 → 纪念品感
+- 标题：恰好 5 条；窄受众（如 Goldendoodle mom gift）；Personalized/Custom + Gift + 场合；Title Case；约 70 字符；**禁止** `- – — / | _` 等符号
+- 五点顺序：可定制项 → 收礼人情感 → 材质与日常品质 → 场合 → 纪念品感
+- 每条英文是完整、语法正确的美式商品句（一句，或最多两句短句相连），大约 15–35 个词，把该条角色的卖点说清楚；不要 3–8 词的短语或关键词堆砌
+- 像人工商家写的 Shopify / Google Shopping 文案：相关产品关键词自然出现一次即可，不堆词；不用 elevate、delve、tapestry、in today's world、whether you're looking 这类空话，也不堆同义词和空洞形容词
+- 中文对照（bulletsZh）跟上英文的完整意思，给员工看，仍然简练
 - 不写物流时效、稀缺、买家秀；不写版权 IP 名（如 Harry Potter）
